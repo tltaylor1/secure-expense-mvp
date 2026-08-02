@@ -37,7 +37,7 @@ modify itself on Windows.
 **Configuration.** Copy `.env.example` to `.env`, then set three values. No password or secret is written anywhere in this repository; you create all of them locally, and the app and seed script refuse to start without them. When a value is missing, the error message includes the command that fixes it.
 
 - `SECRET_KEY` signs login tokens. Generate one: `python3 -c "import secrets; print(secrets.token_hex(32))"`
-- `POSTGRES_PASSWORD` is the database password, used by Docker Compose only. Generate it the same way.
+- `POSTGRES_PASSWORD` is the database password, used by Docker Compose only. Generate it the same way. Set it before the first start and leave it alone: PostgreSQL applies this value only when it first creates its data directory, so changing it later means the stored password and the one in `.env` no longer match. To change it, discard the database with `docker compose down -v` and start again.
 - `DEMO_PASSWORD` is the password for the three demo accounts below. Choose it yourself; it is what you type at the login screen. To change it later, edit `.env` and run the seed script again; reseeding rebuilds the demo data from nothing.
 
 With only Docker installed, generate keys using the application's own image instead of a local Python:
@@ -45,6 +45,8 @@ With only Docker installed, generate keys using the application's own image inst
 ```bash
 docker compose run --rm --no-deps app python -c "import secrets; print(secrets.token_hex(32))"
 ```
+
+**Stopping and starting over.** `docker compose down` stops the stack and keeps the data. `docker compose down -v` also deletes the database and the stored receipts, which is what you want to return to a clean state or after changing `POSTGRES_PASSWORD`.
 
 | Email | Role |
 |---|---|

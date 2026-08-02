@@ -23,6 +23,7 @@ import logging
 import sys
 import csv
 import io
+from contextlib import asynccontextmanager
 from datetime import date
 from pathlib import Path
 from uuid import uuid4
@@ -35,7 +36,7 @@ from sqlalchemy.orm import Session
 from app.audit import write_audit
 from app.auth import create_token, get_current_user, require_manager, verify_password
 from app.config import MAX_RECEIPT_BYTES, TOKEN_TTL_MINUTES, UPLOAD_DIR
-from app.database import get_db
+from app.database import check_connection, get_db
 from app.models import Category, Expense, ExpenseStatus, Receipt, Role, User, utc_now
 from app.schemas import (
     CategoryOut,
@@ -46,9 +47,18 @@ from app.schemas import (
     UserOut,
 )
 
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # Prove the database is reachable before serving anything, so a
+    # misconfiguration is a startup failure with an explanation rather than a
+    # bare 500 on the first login.
+    check_connection()
+    yield
+
+
 # Interactive /docs stays enabled: the app runs locally and the docs page lets a
 # reviewer exercise the API directly. A public deployment would disable or gate it.
-app = FastAPI(title="Expense Management MVP")
+app = FastAPI(title="Expense Management MVP", lifespan=lifespan)
 
 # Security events flow to standard output as JSON lines, where a container
 # runtime or log shipper picks them up. Configured once; the audit table in

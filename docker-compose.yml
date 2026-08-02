@@ -1,0 +1,42 @@
+# Local full-stack run: PostgreSQL plus the app image. Secrets come from the
+# gitignored .env file; nothing here carries a credential.
+services:
+  db:
+    # Digest-pinned; the tag comment records what it was resolved from (postgres:17-alpine).
+    image: postgres@sha256:742f40ea20b9ff2ff31db5458d127452988a2164df9e17441e191f3b72252193
+    environment:
+      POSTGRES_USER: expense
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
+      POSTGRES_DB: expenses
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U expense -d expenses"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # No ports entry on purpose: the database is reachable only on the compose
+    # network, from the app. The host does not expose it.
+
+  app:
+    build: .
+    environment:
+      SECRET_KEY: ${SECRET_KEY:?set in .env}
+      TOKEN_TTL_MINUTES: ${TOKEN_TTL_MINUTES:-60}
+      DATABASE_URL: postgresql+psycopg://expense:${POSTGRES_PASSWORD}@db:5432/expenses
+      # Only the seed script reads this; it is passed through so
+      # "docker compose run app python seed.py" can see it.
+      DEMO_PASSWORD: ${DEMO_PASSWORD:?set in .env}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Receipts outlive container recreation, like the database rows that
+      # reference them.
+      - uploads:/app/uploads
+
+volumes:
+  pgdata:
+  uploads:

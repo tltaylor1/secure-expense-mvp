@@ -1,0 +1,16 @@
+# Keep secrets, local state, and noise out of the build context. The image
+# gets exactly the files the Dockerfile copies, and .env can never leak into
+# a layer because it never reaches the builder.
+.env
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.db
+*.sqlite
+*.sqlite3
+.git/
+.github/
+tests/
+sbom.json
+*.md

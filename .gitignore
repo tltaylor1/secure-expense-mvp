@@ -1,0 +1,25 @@
+# Environment and secrets
+.env
+*.pem
+*.key
+
+# Python
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Editor and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Receipt uploads: user files never enter the repository
+uploads/
+test_uploads/

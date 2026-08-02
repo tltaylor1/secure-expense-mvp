@@ -9,7 +9,11 @@ load_dotenv()
 # the day someone forgets to set the real one.
 SECRET_KEY = os.environ.get("SECRET_KEY")
 if not SECRET_KEY:
-    raise RuntimeError("SECRET_KEY is not set. Copy .env.example to .env first.")
+    # The error carries the fix: a reader with only this message can recover.
+    raise RuntimeError(
+        "SECRET_KEY is not set. Copy .env.example to .env, then generate a key: "
+        'python3 -c "import secrets; print(secrets.token_hex(32))"'
+    )
 
 TOKEN_TTL_MINUTES = int(os.environ.get("TOKEN_TTL_MINUTES", "60"))
 

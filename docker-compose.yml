@@ -16,7 +16,11 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     # No ports entry on purpose: the database is reachable only on the compose
-    # network, from the app. The host does not expose it.
+    # network, from the app. The host does not expose it. The database
+    # container keeps its default capabilities because its startup switches
+    # users; it still cannot gain new privileges.
+    security_opt:
+      - no-new-privileges:true
 
   app:
     build: .
@@ -28,13 +32,26 @@ services:
       # "docker compose run app python seed.py" can see it.
       DEMO_PASSWORD: ${DEMO_PASSWORD:?set in .env}
     ports:
-      - "8000:8000"
+      # Bound to loopback: the app is reachable from this machine only, not
+      # from the local network.
+      - "127.0.0.1:8000:8000"
     depends_on:
       db:
         condition: service_healthy
+    # Least privilege applies to the container boundary, not only to code.
+    # Each line is verifiable with a command; the README lists them.
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    cpus: 1.0
     volumes:
-      # Receipts outlive container recreation, like the database rows that
-      # reference them.
+      # The one writable path: receipts outlive container recreation, like
+      # the database rows that reference them.
       - uploads:/app/uploads
 
 volumes:

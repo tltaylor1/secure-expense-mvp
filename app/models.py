@@ -63,7 +63,8 @@ class Expense(Base):
     # Integer cents: floats corrupt currency (see README, data model decisions).
     amount_cents: Mapped[int] = mapped_column(Integer)
     description: Mapped[str] = mapped_column(String(500))
-    expense_date: Mapped[date] = mapped_column(Date)
+    # Indexed because the monthly report filters on it.
+    expense_date: Mapped[date] = mapped_column(Date, index=True)
     status: Mapped[ExpenseStatus] = mapped_column(
         Enum(ExpenseStatus), default=ExpenseStatus.PENDING
     )
@@ -111,8 +112,12 @@ class AuditLog(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     # Nullable: a failed login has no authenticated user to attribute.
     user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
-    action: Mapped[str] = mapped_column(String(50))
+    # Action and time are indexed because they are what an investigation
+    # filters on: which events, in which window.
+    action: Mapped[str] = mapped_column(String(50), index=True)
     target_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # Short factual context only; never passwords, tokens, or request bodies.
     detail: Mapped[str] = mapped_column(String(200), default="")
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, index=True
+    )

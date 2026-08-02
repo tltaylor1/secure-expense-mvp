@@ -4,7 +4,8 @@
 
 ## Stack
 
-- Python 3.11, FastAPI, SQLite, pytest
+- Python 3.14, FastAPI, PostgreSQL under Docker Compose, pytest
+- SQLite serves the zero-setup quick start and the test suite, through the same ORM and models
 - Dependencies pinned in requirements.txt
 - Virtual environment in `venv/` (never committed)
 
@@ -26,6 +27,7 @@
 ## Security requirements
 
 - No secrets in the repository, ever. Configuration and credentials live in `.env`, which is gitignored. Provide a `.env.example` with placeholder values instead.
+- No credential-shaped strings anywhere in any tracked file or commit, including demo, test, and sample passwords. Demo credentials come from `.env` and fail fast when missing; test suites generate theirs per run. A reader must never have to decide whether a password-looking string matters.
 - Review the full diff for secrets and credentials before every commit. Before the final push, scan the entire git history for secrets, not just the current files.
 - Database access uses the ORM or parameterized queries only. Never build SQL from string concatenation or f-strings.
 - Every API endpoint validates input through Pydantic models. No raw dict handling.
@@ -35,7 +37,7 @@
 - If the application has users, hash passwords with bcrypt (the pyca/bcrypt package, used directly). Never store, log, or return passwords in plain text.
 - Error responses to clients are generic. Stack traces, database errors, and internal details go to server logs only.
 - Log security-relevant events: logins, failed logins, and denied access attempts. Never log passwords, tokens, or full request bodies.
-- Never commit the SQLite database file. Provide a seed script that recreates schema and sample data.
+- Never commit a database file. Provide a seed script that recreates schema and sample data. Sample data is obviously fake and never resembles real records.
 - CORS: no wildcard origins combined with credentials.
 - Frontend inserts API data into the page as text (textContent), never as HTML (innerHTML), because any user-supplied value rendered in another user's browser is an XSS surface.
 - Auth tokens travel in a request header, never a cookie, to keep CSRF out of scope by design.
@@ -54,13 +56,6 @@
 - HTTP status semantics: missing or invalid credentials return 401; valid identity with insufficient authority returns 403. Check what the framework returns by default; do not assume.
 - The README states the cross-origin (CORS) posture even when the answer is "no cross-origin access on purpose."
 - Account-lifecycle features that deliberately do not exist (signup, password reset, email change) are listed in the README as attack-surface decisions. If signup exists, enforce a minimum password length and note breached-password checking as production hardening.
-
--------------------------------------------------------------------------------
-
-## Priorities under time pressure
-
-- Build the thinnest end-to-end slice first (one table, one endpoint, one page), then widen. The app must always be in a runnable state.
-- When time runs short, cut scope, never the decision record and never the security pass. A small feature set with documented reasoning beats a large one without it.
 
 -------------------------------------------------------------------------------
 

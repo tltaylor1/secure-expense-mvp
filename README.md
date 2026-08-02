@@ -4,7 +4,7 @@ A small expense submission and approval tool, built as an MVP (minimum viable pr
 
 The build is deliberately small and security-first: every design decision below is recorded with the threat or failure it addresses, so the code and its reasoning can be reviewed together.
 
-**Contents:** [Setup and run](#setup-and-run) · [Using the app](#using-the-app) · [Repository map](#repository-map) · [Architecture](#architecture) · [Design decisions](#design-decisions) · [Production path](#production-path) · [Security in the development lifecycle](#security-in-the-development-lifecycle) · [Roadmap](#roadmap) · [AI-assisted development](#ai-assisted-development)
+**Contents:** [Setup and run](#setup-and-run) · [Using the app](#using-the-app) · [Data model and API shape](#data-model-and-api-shape) · [Repository map](#repository-map) · [Architecture](#architecture) · [Design decisions](#design-decisions) · [Testing](#testing) · [Production path](#production-path) · [Security in the development lifecycle](#security-in-the-development-lifecycle) · [Roadmap](#roadmap) · [Where I drew the line on done](#where-i-drew-the-line-on-done) · [AI-assisted development](#ai-assisted-development)
 
 -------------------------------------------------------------------------------
 
@@ -34,11 +34,17 @@ On Windows, replace `venv/bin/` with `venv\Scripts\`, and always run pip as
 `python -m pip`: the dev requirements pin pip itself, and `pip.exe` cannot
 modify itself on Windows.
 
-**Configuration.** Copy `.env.example` to `.env`, then set three values. No password or secret is written anywhere in this repository; you create all of them locally, and the app and seed script refuse to start without them.
+**Configuration.** Copy `.env.example` to `.env`, then set three values. No password or secret is written anywhere in this repository; you create all of them locally, and the app and seed script refuse to start without them. When a value is missing, the error message includes the command that fixes it.
 
 - `SECRET_KEY` signs login tokens. Generate one: `python3 -c "import secrets; print(secrets.token_hex(32))"`
 - `POSTGRES_PASSWORD` is the database password, used by Docker Compose only. Generate it the same way.
-- `DEMO_PASSWORD` is the password for the three demo accounts below. Choose it yourself; it is what you type at the login screen.
+- `DEMO_PASSWORD` is the password for the three demo accounts below. Choose it yourself; it is what you type at the login screen. To change it later, edit `.env` and run the seed script again; reseeding rebuilds the demo data from nothing.
+
+With only Docker installed, generate keys using the application's own image instead of a local Python:
+
+```bash
+docker compose run --rm --no-deps app python -c "import secrets; print(secrets.token_hex(32))"
+```
 
 | Email | Role |
 |---|---|
@@ -60,14 +66,27 @@ Open http://127.0.0.1:8000 and log in with a demo email and your `DEMO_PASSWORD`
 
 Interactive API documentation is at `/docs`; it can exercise every endpoint directly.
 
-To run the tests and scanners:
+-------------------------------------------------------------------------------
 
-```bash
-venv/Scripts/python -m pip install --require-hashes -r requirements-dev.txt
-venv/Scripts/pytest -q
-venv/Scripts/bandit -r app -q
-venv/Scripts/pip-audit -r requirements.txt --disable-pip
+## Data model and API shape
+
+Five tables, and the relationships are the design:
+
 ```
+users --< expenses >-- categories
+             |
+             o-- receipts   (at most one per expense)
+audit_log
+```
+
+- An **expense** belongs to one user and one category. Its status is a constrained value, and once decided it carries its own attribution: who decided it and when, as columns on the row.
+- A **receipt** is optional evidence, at most one per expense, stored on disk under a server-generated name with only its metadata in the table.
+- The **audit log** records security-relevant events with who, what, and when. It is append-only by convention and written in the same transaction as the action it records.
+
+The API mirrors the data rather than the screens. `/expenses` reads differently by role because the query is built differently, which is the authorization. The write endpoints are narrow: create, approve, reject, one receipt upload. `/reports/expenses.csv` is a query over the same rows, not a new table. Every read declares a response model, so what a client may see is defined by the schema, not by what the row contains.
+
+Indexes exist on the columns that are actually filtered and joined: owner and email, the expense date the monthly report filters on, and the audit log's action and time, which are what an investigation queries.
+
 
 -------------------------------------------------------------------------------
 
@@ -171,6 +190,24 @@ Secure by accident and secure on purpose look identical in code, so every defaul
 - **Error bodies are short JSON detail strings; accepted.** No stack traces or internals reach a client; those go to server logs.
 - **Served files carried no Cache-Control header; changed.** Without one, browsers cache the page heuristically and keep showing a stale copy after a deploy, which was observed live against a rebuilt container. The page and static files now send no-cache, meaning store but revalidate: an etag round trip returns 304 while content is unchanged and fresh content the request after it changes.
 
+### The container is part of the attack surface
+
+Least privilege applies to the container boundary, not only to application code. Each claim below is verifiable in a running stack with the commands that follow.
+
+- **The process is not root.** The image creates an unprivileged user and switches to it before the server starts.
+- **The root filesystem is read only.** An attacker with a write primitive cannot modify the code that runs next. The receipts volume is the single writable path, and `/tmp` is an in-memory filesystem.
+- **All Linux capabilities are dropped.** Serving HTTP as an unprivileged user needs none.
+- **No new privileges** is set on both services, so a child process cannot gain more privilege than its parent.
+- **Memory and processor use are capped.** An application that accepts file uploads is where memory spikes; a bounded container cannot starve its host.
+- **The database publishes no host port,** and the app binds to loopback, so neither service is reachable from the local network.
+- **The build context excludes secrets and noise.** `.dockerignore` keeps `.env`, tests, and local state out of the image entirely, so none of it can end up in a layer.
+
+```bash
+docker compose exec app id                          # uid=1000(appuser), not root
+docker compose exec app sh -c "echo x > /app/probe" # fails: read-only file system
+docker compose exec app sh -c "grep CapEff /proc/1/status"  # all zeros
+```
+
 ### Secrets
 
 - **Three layers, ordered by strength.** Architecture: secrets live only in the gitignored `.env`, never in code, with `.env.example` documenting the variables. Enforcement: gitleaks runs as a pre-commit hook and blocks commits containing secret patterns; bypassing hooks is prohibited. Review: every diff is read before commit, and the full history is scanned before submission.
@@ -203,6 +240,29 @@ Dependencies are treated as the part of the codebase nobody wrote here, which is
 
 - **These documents follow the Federal Plain Language Guidelines** (plainlanguage.gov): common words, short sentences, present tense, and every acronym defined at its first use. The reasoning is a security argument, not a style preference: a control nobody can parse is a control nobody can challenge, and review quality depends on the reviewer understanding every sentence the first time.
 - **Major sections are separated by horizontal rules.** Long operational documents get skimmed before they get read, the way an administrator skims a manual page: find the band you need, then read closely. The dividers work both rendered and as plain text in an editor.
+
+-------------------------------------------------------------------------------
+
+## Testing
+
+```bash
+python3 -m venv venv
+venv/bin/python -m pip install --require-hashes -r requirements.txt -r requirements-dev.txt
+venv/bin/pytest -q
+venv/bin/bandit -r app -q
+venv/bin/pip-audit -r requirements.txt --disable-pip
+```
+
+36 tests, in six files, each named for the property it defends:
+
+- `test_auth.py`: login works, wrong password and unknown email are indistinguishable, the output model excludes the password hash, garbage and missing tokens return 401, unknown fields fail loudly, and the login response states its expiry contract.
+- `test_expenses.py`: a user cannot see another user's rows, smuggled owner and status fields are rejected, decisions are immutable and attributed on the record, self-approval is refused, input bounds hold, page size is capped, and denials reach the audit trail.
+- `test_receipts.py`: upload is owner-only, download is owner-or-manager only, the declared type must be on the allowlist and match the file's own bytes, oversize is rejected, one receipt per expense, and receipt events are audited.
+- `test_reports.py`: an employee's export contains only their rows, a manager's covers the month, formula cells arrive neutralized, headers are server-generated, month bounds validate, and downloads are audited.
+- `test_logging.py`: the failed-login event reaches the structured log and the attempted password never does.
+- `test_caching.py`: the page and static files demand revalidation and API responses carry no cache directive.
+
+The suite generates its own demo credential per run, so no literal password exists anywhere in the repository, including in tests.
 
 -------------------------------------------------------------------------------
 
@@ -270,7 +330,50 @@ Planned additions:
 - **On becoming public:** platform secret scanning with push protection, CodeQL analysis, and an OpenSSF Scorecard run, each free for public repositories.
 - **The production path items** above, only if this app ever actually deploys; they are recorded so the deferral stays deliberate.
 
+### What I would build next, in order
+
+- **Rate limiting on authentication.** The clearest missing control; the login endpoint accepts unlimited password attempts, slowed only by bcrypt's cost.
+- **Dual approval above an amount threshold.** Today one manager approves anything. Separation of duties already blocks self-approval; a second approver for large amounts is the same principle applied to value.
+- **JSON export beside the CSV**, for feeding another system rather than a spreadsheet.
+- **Single sign-on against an identity provider.** It removes local passwords entirely and ends access when the identity provider says so, with the local login kept for break-glass.
+
+### Gaps by category, not by feature
+
+Reviewing against standard security properties, rather than a feature list, surfaces different work. Confidentiality and integrity are well covered; these are not:
+
+- **Availability.** Container resource caps exist, but there is no rate limiting and no request timeout budget.
+- **Backup and retention.** Expense records and receipt files have no backup procedure and no retention policy.
+- **Audit integrity.** Anyone with database write access could alter the trail. Chaining each entry to a digest of the previous one, or append-only storage, turns it into evidence that resists tampering.
+- **Least privilege in the database.** The app connects with owner rights it does not need; a restricted role with data rights only removes what an injection flaw could reach.
+- **Incident response.** The detection queries exist in the audit data; alert thresholds and a written first-hour playbook do not. The playbook is short: rotate the signing secret to end every session, reset affected credentials, reconstruct activity from the trail.
+
+### Would change, not add
+
+- **A session store or token denylist**, so one stolen token can be revoked without ending every session.
+- **Schema migrations** (Alembic) in place of create-all, which is the honest requirement before this runs twice against data anyone cares about.
+- **Streamed report generation** once a month of data no longer fits comfortably in one response.
+
 The larger build this application deliberately does not attempt, container orchestration on Kubernetes, cloud infrastructure as code, and a security-gated deployment pipeline, is the subject of a companion reference implementation built in phases, where each of those steps gets the same treatment: decided, threat-modeled, and documented before built.
+
+-------------------------------------------------------------------------------
+
+## Where I drew the line on done
+
+"Done" is a claim, so it needs a definition. Mine, for this build:
+
+**Done means a stranger can run it, and every decision can be defended.**
+
+- It runs from a fresh clone using only this document, with Docker alone or with Python alone.
+- Every security control is a mechanism rather than an intention, and the container claims are verifiable by commands written down here.
+- The security paths have tests: cross-user access, smuggled fields, hostile uploads, formula injection, and the log that must never contain a password.
+- Every non-obvious choice carries its reason, in the code or in this document, including what was deliberately left out.
+- The dependency tree is hash-pinned and inventoried, the scanners pass, and no credential-shaped string exists anywhere in the repository or its history, not even a demo one.
+
+**Done does not mean finished.** The roadmap above lists what is deliberately absent, each with its reason, because an undocumented gap and a considered exclusion look identical in code, and only the record distinguishes them.
+
+-------------------------------------------------------------------------------
+
+## AI-assisted development
 
 Built with an AI coding agent under my direction and review. The standards the agent follows are in [CLAUDE.md](CLAUDE.md). Commits the agent co-authored say so in a Co-Authored-By trailer naming the exact model (Claude Fable 5, model id claude-fable-5), so the provenance of the code is readable from the history the same way the provenance of the dependencies is readable from the supply chain record. The direction that most shaped the result:
 

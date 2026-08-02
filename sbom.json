@@ -371,18 +371,18 @@
     },
     {
       "bom-ref": "requirements-L90",
-      "description": "requirements line 90: fastapi==0.140.13     --hash=sha256:500172a08cf1459901f90b05c37d93060dada3b573fec8f0862445db52ba6b4b     --hash=sha256:8b017110e1e9f30a95e8bdb8f71fbe2f0fe3af5717109e5b14f9e069df54f6d4",
+      "description": "requirements line 90: fastapi==0.141.1     --hash=sha256:bfb91aa2d334c61cb35ba9a116fc123b3d3df31640b801cf57a7a78ec3f603b3     --hash=sha256:e8822fc40db1e1858054d7a949a888695bc9bdce70139178e33bd2871a453ca1",
       "externalReferences": [
         {
           "comment": "implicit dist url",
           "hashes": [
             {
               "alg": "SHA-256",
-              "content": "500172a08cf1459901f90b05c37d93060dada3b573fec8f0862445db52ba6b4b"
+              "content": "bfb91aa2d334c61cb35ba9a116fc123b3d3df31640b801cf57a7a78ec3f603b3"
             },
             {
               "alg": "SHA-256",
-              "content": "8b017110e1e9f30a95e8bdb8f71fbe2f0fe3af5717109e5b14f9e069df54f6d4"
+              "content": "e8822fc40db1e1858054d7a949a888695bc9bdce70139178e33bd2871a453ca1"
             }
           ],
           "type": "distribution",
@@ -390,9 +390,9 @@
         }
       ],
       "name": "fastapi",
-      "purl": "pkg:pypi/fastapi@0.140.13",
+      "purl": "pkg:pypi/fastapi@0.141.1",
       "type": "library",
-      "version": "0.140.13"
+      "version": "0.141.1"
     },
     {
       "bom-ref": "requirements-L94",
@@ -2488,18 +2488,18 @@
     },
     {
       "bom-ref": "requirements-L590",
-      "description": "requirements line 590: uvicorn==0.51.0     --hash=sha256:5d38af6cd620f2ae3849fb44fd4879e0890aa1febe8d47eb355fb45d93fe6a5b     --hash=sha256:f6f4b69b657c312f516dd2d268ab9ae6f254b11e4bac504f37b2ab58b24dd0b0",
+      "description": "requirements line 590: uvicorn==0.52.0     --hash=sha256:3d887809810b89ed33501bcf0a9aba469b06ecd608158efce04bd6b48d8c9b08     --hash=sha256:ca8876ad6c1983f394157c168b39d52f6dd56dabf5602fa0982751cffc2293ae",
       "externalReferences": [
         {
           "comment": "implicit dist url",
           "hashes": [
             {
               "alg": "SHA-256",
-              "content": "5d38af6cd620f2ae3849fb44fd4879e0890aa1febe8d47eb355fb45d93fe6a5b"
+              "content": "3d887809810b89ed33501bcf0a9aba469b06ecd608158efce04bd6b48d8c9b08"
             },
             {
               "alg": "SHA-256",
-              "content": "f6f4b69b657c312f516dd2d268ab9ae6f254b11e4bac504f37b2ab58b24dd0b0"
+              "content": "ca8876ad6c1983f394157c168b39d52f6dd56dabf5602fa0982751cffc2293ae"
             }
           ],
           "type": "distribution",
@@ -2507,9 +2507,9 @@
         }
       ],
       "name": "uvicorn",
-      "purl": "pkg:pypi/uvicorn@0.51.0",
+      "purl": "pkg:pypi/uvicorn@0.52.0",
       "type": "library",
-      "version": "0.51.0"
+      "version": "0.52.0"
     },
     {
       "bom-ref": "requirements-L594",
@@ -3704,7 +3704,7 @@
     }
   ],
   "metadata": {
-    "timestamp": "2026-07-30T23:50:11.895834+00:00",
+    "timestamp": "2026-08-02T18:05:32.089195+00:00",
     "tools": {
       "components": [
         {
@@ -3808,7 +3808,7 @@
       ]
     }
   },
-  "serialNumber": "urn:uuid:0f33ee42-a2f4-4fce-8483-485cb2fe8f3b",
+  "serialNumber": "urn:uuid:b5b72352-dc58-4623-b9fc-14a660e883d0",
   "version": 1,
   "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
   "bomFormat": "CycloneDX",

@@ -4,7 +4,7 @@ A small expense submission and approval tool, built as an MVP (minimum viable pr
 
 The build is deliberately small and security-first: every design decision below is recorded with the threat or failure it addresses, so the code and its reasoning can be reviewed together.
 
-**Contents:** [Setup and run](#setup-and-run) · [Repository map](#repository-map) · [Architecture](#architecture) · [Design decisions](#design-decisions) · [Production path](#production-path) · [Security in the development lifecycle](#security-in-the-development-lifecycle) · [AI-assisted development](#ai-assisted-development)
+**Contents:** [Setup and run](#setup-and-run) · [Using the app](#using-the-app) · [Repository map](#repository-map) · [Architecture](#architecture) · [Design decisions](#design-decisions) · [Production path](#production-path) · [Security in the development lifecycle](#security-in-the-development-lifecycle) · [Roadmap](#roadmap) · [AI-assisted development](#ai-assisted-development)
 
 -------------------------------------------------------------------------------
 
@@ -34,7 +34,11 @@ On Windows, replace `venv/bin/` with `venv\Scripts\`, and always run pip as
 `python -m pip`: the dev requirements pin pip itself, and `pip.exe` cannot
 modify itself on Windows.
 
-Open http://127.0.0.1:8000. The seed script creates three demo accounts, all sharing the DEMO_PASSWORD you set in `.env`. No password is written in this repository, demo or otherwise; the seed script refuses to run without one, the same fail-fast rule the signing secret follows.
+**Configuration.** Copy `.env.example` to `.env`, then set three values. No password or secret is written anywhere in this repository; you create all of them locally, and the app and seed script refuse to start without them.
+
+- `SECRET_KEY` signs login tokens. Generate one: `python3 -c "import secrets; print(secrets.token_hex(32))"`
+- `POSTGRES_PASSWORD` is the database password, used by Docker Compose only. Generate it the same way.
+- `DEMO_PASSWORD` is the password for the three demo accounts below. Choose it yourself; it is what you type at the login screen.
 
 | Email | Role |
 |---|---|
@@ -42,7 +46,21 @@ Open http://127.0.0.1:8000. The seed script creates three demo accounts, all sha
 | bob@example.com | employee |
 | mona@example.com | manager |
 
-Interactive API documentation is at `/docs`. To run the tests and scanners:
+-------------------------------------------------------------------------------
+
+## Using the app
+
+Open http://127.0.0.1:8000 and log in with a demo email and your `DEMO_PASSWORD`.
+
+**As an employee (alice or bob):** submit an expense with the form; it appears in your list as pending. Use **Attach** on a pending expense to add a receipt (PNG, JPEG, or PDF, up to 5 MB). Use **Download monthly CSV** with a month selected to export your own expenses; the file never contains anyone else's rows. The summary line above the table shows your counts and total.
+
+**As the manager (mona):** the list becomes the review queue, every employee's pending expenses. **Approve** or **Reject** decides one; a decision is final, and you cannot decide your own submissions. **Receipt** opens attached evidence. Your monthly CSV covers all employees for the month.
+
+**Session:** the countdown next to the logout button shows the time the server will keep honoring your login. It turns amber in the last five minutes, and the page returns to the login screen when the session ends.
+
+Interactive API documentation is at `/docs`; it can exercise every endpoint directly.
+
+To run the tests and scanners:
 
 ```bash
 venv/Scripts/python -m pip install --require-hashes -r requirements-dev.txt

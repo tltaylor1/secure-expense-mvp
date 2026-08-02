@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Expense Management</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<h1>Expense Management</h1>
+<p id="error"></p>
+
+<section id="login-view">
+  <form id="login-form">
+    <input id="email" type="email" placeholder="email" required>
+    <input id="password" type="password" placeholder="password" required>
+    <button type="submit">Log in</button>
+  </form>
+</section>
+
+<section id="app-view" class="hidden">
+  <p>Signed in as <strong id="who"></strong> (<span id="role"></span>)
+     <span id="session-timer" title="The server enforces this expiry; the timer just shows it"></span>
+     <button id="logout">Log out</button></p>
+
+  <form id="expense-form">
+    <select id="category" required></select>
+    <input id="amount" type="number" step="0.01" min="0.01" max="1000000" placeholder="amount $" required>
+    <input id="description" maxlength="500" placeholder="description" required>
+    <input id="date" type="date" required>
+    <button type="submit">Submit expense</button>
+  </form>
+
+  <h2 id="list-title" style="font-size:1.1rem"></h2>
+  <p id="summary"></p>
+
+  <form id="report-form">
+    <input id="report-month" type="month" required>
+    <button type="submit">Download monthly CSV</button>
+  </form>
+  <table>
+    <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+</section>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+/* Theme via custom properties: light is the default, dark follows the
+   operating system preference. Status colors are tuned per scheme to keep
+   contrast readable in both. */
+:root {
+  --bg: #ffffff;
+  --fg: #1f2328;
+  --muted: #d0d7de;
+  --surface: #f6f8fa;
+  --approved: #1a7f37;
+  --rejected: #b42318;
+  --pending: #9a6700;
+  --error: #b42318;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117;
+    --fg: #e6edf3;
+    --muted: #30363d;
+    --surface: #161b22;
+    --approved: #3fb950;
+    --rejected: #f85149;
+    --pending: #d29922;
+    --error: #f85149;
+  }
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  max-width: 720px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  background: var(--bg);
+  color: var(--fg);
+}
+h1 { font-size: 1.4rem; }
+form { display: flex; gap: .5rem; flex-wrap: wrap; margin: 1rem 0; }
+input, select, button {
+  padding: .45rem .6rem;
+  font-size: 1rem;
+  background: var(--surface);
+  color: var(--fg);
+  border: 1px solid var(--muted);
+  border-radius: 4px;
+}
+button { cursor: pointer; }
+table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+th, td { text-align: left; padding: .4rem .6rem; border-bottom: 1px solid var(--muted); }
+.status-approved { color: var(--approved); }
+.status-rejected { color: var(--rejected); }
+.status-pending { color: var(--pending); }
+#error { color: var(--error); min-height: 1.2em; }
+#session-timer { color: var(--fg); opacity: .7; margin: 0 .5rem; }
+#session-timer.expiring { color: var(--pending); opacity: 1; }
+.hidden { display: none; }

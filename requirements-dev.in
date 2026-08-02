@@ -1,0 +1,8 @@
+# Development and audit tooling. Compiled to requirements-dev.txt with hashes.
+-c requirements.txt
+pytest
+httpx
+pip-tools
+pip-audit
+cyclonedx-bom
+bandit

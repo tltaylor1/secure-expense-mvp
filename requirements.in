@@ -1,0 +1,12 @@
+# Runtime dependencies. Compiled to requirements.txt with hashes; install only from the compiled file.
+fastapi
+uvicorn[standard]
+sqlalchemy
+bcrypt
+pyjwt
+python-dotenv
+# psycopg[binary]: PostgreSQL driver, canonical project at psycopg.org.
+# The binary extra ships prebuilt libpq so the install stays hash-verifiable.
+psycopg[binary]
+# python-multipart: FastAPI's multipart form parser, needed for receipt upload.
+python-multipart

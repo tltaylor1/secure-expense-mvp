@@ -255,7 +255,7 @@ venv/bin/bandit -r app -q
 venv/bin/pip-audit -r requirements.txt --disable-pip
 ```
 
-36 tests, in six files, each named for the property it defends:
+37 tests, in seven files, each named for the property it defends:
 
 - `test_auth.py`: login works, wrong password and unknown email are indistinguishable, the output model excludes the password hash, garbage and missing tokens return 401, unknown fields fail loudly, and the login response states its expiry contract.
 - `test_expenses.py`: a user cannot see another user's rows, smuggled owner and status fields are rejected, decisions are immutable and attributed on the record, self-approval is refused, input bounds hold, page size is capped, and denials reach the audit trail.
@@ -263,8 +263,21 @@ venv/bin/pip-audit -r requirements.txt --disable-pip
 - `test_reports.py`: an employee's export contains only their rows, a manager's covers the month, formula cells arrive neutralized, headers are server-generated, month bounds validate, and downloads are audited.
 - `test_logging.py`: the failed-login event reaches the structured log and the attempted password never does.
 - `test_caching.py`: the page and static files demand revalidation and API responses carry no cache directive.
+- `test_startup.py`: an unreachable database stops startup with the command that fixes it, rather than serving and failing later.
 
 The suite generates its own demo credential per run, so no literal password exists anywhere in the repository, including in tests.
+
+### Verified by mutation, not by coverage
+
+Coverage counts lines executed, which says nothing about whether a test would notice a broken control. Three authorization defects were planted in turn and the suite was run against each:
+
+| Planted defect | Result |
+|---|---|
+| Owner filter removed from the expense list | 2 tests fail |
+| Self-approval ban removed | 2 tests fail |
+| Ownership check removed from the receipt download | 1 test fails |
+
+Each was reverted and the suite returns to green. A control with no failing test behind it is an assumption, and this is the cheapest way to tell the difference.
 
 -------------------------------------------------------------------------------
 

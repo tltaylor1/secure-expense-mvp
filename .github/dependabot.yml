@@ -1,0 +1,24 @@
+# Dependency updates arrive as pull requests and pass the same CI gates as
+# code. Two triggers exist for updates: these scheduled bumps for ordinary
+# drift, and a vulnerability finding, which does not wait for the schedule.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+    # pip-compile owns the resolved pins; Dependabot proposes, the compile
+    # and hash regeneration happen in review before merge.
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    # Actions are pinned to commit hashes; Dependabot understands hash pins
+    # and proposes hash-to-hash bumps with the release tag in the diff.
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    # The base image is digest-pinned; bumps arrive as digest updates.

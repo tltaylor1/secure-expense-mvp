@@ -1,0 +1,60 @@
+# Runs the same gates this repo runs locally, so no check depends on a human
+# remembering. Actions are pinned to full commit hashes, the same reasoning as
+# hash-pinned pip installs: a tag can be moved to different code, a hash cannot.
+# The trailing comment records which release each hash was resolved from.
+name: ci
+
+on: [push]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 0  # full history so the secret scan covers every commit
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: "3.14"
+
+      - name: Install with hash verification
+        run: pip install --require-hashes -r requirements.txt -r requirements-dev.txt
+
+      - name: Create throwaway CI secret
+        # Real secrets never live in CI config; this key exists for one run.
+        run: python -c "import secrets; print('SECRET_KEY=' + secrets.token_hex(32))" > .env
+
+      - name: Tests
+        run: pytest -q
+
+      - name: Static analysis (bandit)
+        run: bandit -r app -q
+
+      - name: Dependency audit (pip-audit)
+        run: pip-audit -r requirements.txt --disable-pip
+
+      - name: Secret scan over full history (gitleaks)
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e  # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Build the image
+        run: docker build -t expense-mvp:ci .
+
+      - name: Scan the image (trivy); fixable high and critical findings fail the build
+        # ignore-unfixed: block on findings with a shipped fix, because those are
+        # actionable today. Findings the distribution has not fixed are tracked,
+        # not blocking; a digest bump picks their fixes up when they ship.
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25  # v0.36.0
+        with:
+          image-ref: expense-mvp:ci
+          format: table
+          exit-code: "1"
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true

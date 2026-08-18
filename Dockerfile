@@ -3,7 +3,14 @@
 # digest for the same reason the pip installs and CI actions are hash-pinned:
 # a tag can move to different code, a digest cannot. The tag comment records
 # what the digest was resolved from.
-FROM python:3.14-slim@sha256:cea0e6040540fb2b965b6e7fb5ffa00871e632eef63719f0ea54bca189ce14a6
+FROM python:3.14-slim@sha256:d6e0850f13fda0e2305d4c3c1c2f7930fe1042d34ddd958e49bba6ef685d0bb2
+
+# Apply the distribution's shipped security updates at build time: the gate
+# blocks on findings with a shipped fix, so the image takes the fixes the
+# base has not been rebuilt with yet.
+RUN apt-get update \
+    && apt-get -y --no-install-recommends upgrade \
+    && rm -rf /var/lib/apt/lists/*
 
 # Run as a dedicated non-root user: a compromised app process should not own
 # the container.

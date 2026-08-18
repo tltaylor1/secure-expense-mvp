@@ -1,0 +1,11 @@
+# Both findings live inside pip's vendored packages in the upstream
+# python:3.14-slim base (pip 26.2.1 declares its vendored versions and
+# the scanner reads them). Nothing this image installs brings them, no
+# site package carries them, and the vendored copies cannot be upgraded
+# independently of pip. They clear when pip ships an updated vendor set
+# and the base rebuilds. Neither is reachable through the served
+# application: pip does not run at runtime.
+# setuptools PackageIndex path traversal, vendored context only:
+CVE-2025-47273
+# msgpack Unpacker out-of-bounds read, pip-vendored copy only:
+GHSA-6v7p-g79w-8964

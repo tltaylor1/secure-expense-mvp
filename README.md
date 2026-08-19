@@ -368,7 +368,7 @@ Reviewing against standard security properties, rather than a feature list, surf
 - **Schema migrations** (Alembic) in place of create-all, which is the honest requirement before this runs twice against data anyone cares about.
 - **Streamed report generation** once a month of data no longer fits comfortably in one response.
 
-The larger build this application deliberately does not attempt, container orchestration on Kubernetes, cloud infrastructure as code, and a security-gated deployment pipeline, is the subject of a companion reference implementation built in phases, where each of those steps gets the same treatment: decided, threat-modeled, and documented before built.
+The larger build this application deliberately does not attempt, container orchestration on Kubernetes, cloud infrastructure as code, and a security-gated deployment pipeline, is the subject of [control-plane](https://tltaylor1.github.io), a program built in phases, where each of those steps gets the same treatment: decided, threat-modeled, and documented before built.
 
 -------------------------------------------------------------------------------
 

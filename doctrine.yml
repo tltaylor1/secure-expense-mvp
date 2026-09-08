@@ -1,0 +1,5 @@
+# Read by build-doctrine's scorer: the repository's kind decides which rules apply.
+kind: application
+invites_contributions: false
+exclusions:
+  contributing: finished on purpose; the README says so and no contributions are invited

@@ -145,7 +145,7 @@ Each gate exists because of a specific failure: forged identity (token), hostile
 - **Money is integer cents.** Binary floating point cannot represent most decimal amounts, so float math corrupts currency silently. Dollars appear only at display time.
 - **Status is a constrained value** with exactly three states: pending, approved, rejected. Free-text status drifts (Approved, approved, APPROVED) and breaks filtering and authorization logic.
 - **The audit log is a table.** Logins, failed logins, approvals, rejections, and denied access attempts each write who, what, and when. Without that record, an incident cannot be investigated. Passwords and tokens are never logged.
-- **State changes carry their own attribution.** A decided expense stores who decided it and when as columns on the row, in addition to the audit log entry. The record answers "who did this" by itself; the audit trail is the independent second copy, not the only copy.
+- **State changes carry their own attribution.** A decided expense stores who decided it and when as columns on the row, in addition to the audit log entry. The record answers "who did this" by itself; the audit trail is a second copy, written by the same code in the same transaction, so it corroborates the row without being independent evidence of it.
 - **The audit write is atomic with the action.** Each state change and its audit row commit in one transaction, so a change cannot exist without its trail, and the trail cannot describe a change that never happened.
 - **Data is minimized by policy, not accident.** The app stores email, role, password hash, and expense records, and nothing else: no names, no payment instruments, no free-form personal data. What is never stored cannot be breached, so the sensitive surface is bounded on purpose.
 
@@ -155,7 +155,7 @@ Each gate exists because of a specific failure: forged identity (token), hostile
 - **Login failure is one generic error.** Wrong email and wrong password return the same message and status. Distinct errors would let an attacker enumerate which emails have accounts.
 - **Token verification pins its algorithm.** The decoder accepts exactly one signing scheme. Without pinning, a forged token can claim a weaker or null scheme and skip verification entirely, a well-known real-world bypass.
 - **The app refuses to start without its signing secret.** The tempting alternative, a hardcoded default, becomes the production secret the day someone forgets to set the real one. Failing at startup is loud; a default is silent.
-- **Both login outcomes hit the audit trail.** Success and failure each write an attributed, timestamped row. In classic terms this is accountability and supports non-repudiation: an actor cannot later deny what the trail shows.
+- **Both login outcomes hit the audit trail.** Success and failure each write an attributed, timestamped row. In classic terms this is accountability: every action is attributed to an authenticated actor and timestamped. It is not non-repudiation, which would need a signature or an anchor the application cannot alter; the trail is as trustworthy as the database it lives in.
 - **Login inputs are size-limited** (email 254 characters, password 200). Unbounded fields let a client submit huge values that the server must hash or store, a cheap way to burn resources.
 - **The browser holds the token in memory, not in localStorage.** Stored tokens survive page refreshes, but any script that ever runs in the page can read storage, which makes it the standard theft target after an injection. Memory-only means a refresh requires logging in again; that inconvenience is accepted deliberately.
 - **Expiry is the entire revocation mechanism, and that is stated rather than hidden.** These tokens are stateless: the server keeps no session list, so no single token can be cancelled before its expiry. The accepted trade is a short lifetime plus one global kill switch, rotating the signing secret, which invalidates every session at once. Per-token revocation requires server-side session state and sits in the production path.
@@ -331,7 +331,7 @@ Coverage was audited against the API Top 10 from OWASP (the Open Worldwide Appli
 | Fuzzing (bombarding inputs with malformed random data) | Skipped | Typed schema validation constrains the input space; fuzzing pays off on parsers and file formats, not typed create-read-update-delete endpoints |
 | Infrastructure-as-code scanning (checkov) | Not applicable | No infrastructure code exists; mandatory the day it does |
 | Container image scanning (trivy) | In CI on every push | Fails the build on any high or critical finding that has a shipped fix, because those are actionable today. Findings the base distribution has not fixed yet are tracked rather than blocking; rebuilding against a newer base digest picks their fixes up when they ship |
-| Commit signing | Skipped | Single author on an account-controlled private remote; a production posture item |
+| Commit signing | On, from August 2 | The first day's commits are unsigned and stay that way, because signing them would rewrite history; everything after them is signed with a registered key. The row said "skipped, private remote" until September 2026, which was true for one day and stale for seven weeks |
 
 -------------------------------------------------------------------------------
 
@@ -339,11 +339,20 @@ Coverage was audited against the API Top 10 from OWASP (the Open Worldwide Appli
 
 This application is complete on purpose. It stays a small, fully explained reference: one page, six endpoints, every control mapped to the threat it answers. Feature growth would dilute exactly the property it exists to demonstrate.
 
-Planned additions:
+Deferred on purpose, and stated so the deferral is a decision rather
+than a gap:
 
-- **Dependency updates through pull requests** (Dependabot), tested by the same CI gates as code. Configured in `.github/dependabot.yml`; the update policy is described in the supply chain section.
-- **On becoming public:** platform secret scanning with push protection, CodeQL analysis, and an OpenSSF Scorecard run, each free for public repositories.
-- **The production path items** above, only if this app ever actually deploys; they are recorded so the deferral stays deliberate.
+- **Public since August 2, 2026.** Platform secret scanning with push
+  protection is on. CodeQL analysis and an OpenSSF Scorecard run were
+  listed for that day and were not added; a finished reference keeps
+  the controls it was finished with, and the program's active
+  repositories carry both. This stays listed as not done.
+- **The production path items** above, only if this app ever actually
+  deploys; they are recorded so the deferral stays deliberate.
+
+Dependency updates through pull requests (Dependabot) are configured in
+`.github/dependabot.yml` and tested by the same CI gates as code; the
+update policy is in the supply chain section.
 
 ### What I would build next, in order
 

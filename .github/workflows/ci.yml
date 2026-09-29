@@ -6,6 +6,12 @@ name: ci
 
 on: [push]
 
+# Least privilege applies to the token every job runs under. Read is all any
+# job here needs, and a job that later needs more asks for it in its own
+# permissions block rather than raising the ceiling for everything.
+permissions:
+  contents: read
+
 jobs:
   checks:
     runs-on: ubuntu-latest
@@ -13,6 +19,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           fetch-depth: 0  # full history so the secret scan covers every commit
+          # The token does not outlive the checkout. Left in the local git
+          # config it is readable by every later step and by anything that
+          # uploads the workspace as an artifact.
+          persist-credentials: false
 
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
@@ -34,15 +44,71 @@ jobs:
       - name: Dependency audit (pip-audit)
         run: pip-audit -r requirements.txt --disable-pip
 
+      # The binary, not the action. The action scans the event's commits:
+      # its source passes --log-opts=--no-merges --first-parent
+      # baseRef^..headRef, and -1 when base and head match. That is a
+      # useful check and it is not the full history this step claims, so
+      # the step ran under a name it did not earn until this pin replaced
+      # it. The binary is verified against the project's published
+      # checksums before it runs, in the runner's temporary directory so
+      # the workspace stays pristine for its own scan.
       - name: Secret scan over full history (gitleaks)
-        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e  # v3.0.0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_VERSION: 8.30.1
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          curl -fsSL -o gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -fsSL -o gitleaks.sums \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          grep "linux_x64.tar.gz\$" gitleaks.sums \
+            | sed "s/gitleaks_.*_linux_x64.tar.gz/gitleaks.tar.gz/" | sha256sum -c -
+          tar -xzf gitleaks.tar.gz gitleaks
+          "$RUNNER_TEMP/gitleaks" git --redact --no-banner "$GITHUB_WORKSPACE"
+
+  # The workflows are code, and they hold the token every other job runs
+  # under, so they get linted and audited like anything else. Without this
+  # job a missing permissions block or a fork-privileged trigger reaches
+  # the default branch unremarked.
+  workflows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: install actionlint, verified
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          curl -sSfL -o al.tar.gz https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
+          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  al.tar.gz" | sha256sum -c -
+          tar -xzf al.tar.gz actionlint
+
+      - name: lint the workflows
+        run: '"$RUNNER_TEMP/actionlint"'
+
+      # zizmor publishes no checksum file; this hash was computed from the
+      # artifact inspected at adoption and pins exactly that artifact.
+      - name: install zizmor, verified
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          curl -sSfL -o zz.tar.gz https://github.com/zizmorcore/zizmor/releases/download/v1.29.0/zizmor-x86_64-unknown-linux-gnu.tar.gz
+          echo "dd96df044a6e8538d5f423790f453bdd03d49e5b2bcc38214acc41a2f1297839  zz.tar.gz" | sha256sum -c -
+          tar -xzf zz.tar.gz
+
+      - name: audit the workflows
+        run: '"$(find "$RUNNER_TEMP" -name zizmor -type f)" --no-online-audits --no-progress .github/workflows/'
+
 
   container:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Build the image
         run: docker build -t expense-mvp:ci .

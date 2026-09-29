@@ -327,6 +327,7 @@ Coverage was audited against the API Top 10 from OWASP (the Open Worldwide Appli
 | License inventory (from the SBOM) | Done | The legal half of supply chain |
 | Security-path tests (pytest) | With the test suite | Prove controls hold under hostile input |
 | CI pipeline running the gates above | Added with the test suite | Removes the human from having to remember |
+| Workflow lint and audit (`actionlint`, `zizmor`) | On every push | The workflows hold the token every other job runs under, so they are code that gets reviewed like code |
 | Scanning the running app, known as DAST (OWASP ZAP) | Deferred to CI against a deployed instance | Six known endpoints with targeted attack-path tests; a crawler adds setup cost, not coverage, at this size |
 | Fuzzing (bombarding inputs with malformed random data) | Skipped | Typed schema validation constrains the input space; fuzzing pays off on parsers and file formats, not typed create-read-update-delete endpoints |
 | Infrastructure-as-code scanning (checkov) | Not applicable | No infrastructure code exists; mandatory the day it does |

@@ -1,10 +1,16 @@
 # Expense Management MVP
 
+## What this is
+
 A small expense submission and approval tool, built as an MVP (minimum viable product: the smallest version that works end to end). Employees submit expenses and track their status. Managers review, approve, or reject them.
 
 The build is deliberately small and security-first: every design decision below is recorded with the threat or failure it addresses, so the code and its reasoning can be reviewed together.
 
-**Contents:** [Setup and run](#setup-and-run) · [Using the app](#using-the-app) · [Data model and API shape](#data-model-and-api-shape) · [Repository map](#repository-map) · [Architecture](#architecture) · [Design decisions](#design-decisions) · [Testing](#testing) · [Production path](#production-path) · [Security in the development lifecycle](#security-in-the-development-lifecycle) · [Roadmap](#roadmap) · [Where I drew the line on done](#where-i-drew-the-line-on-done) · [AI-assisted development](#ai-assisted-development)
+What stands behind it: thirty-seven tests, and three authorization defects planted in turn to prove the tests would notice. Removing the owner filter from the expense list breaks two tests, removing the self-approval ban breaks two, and removing the ownership check from a receipt download breaks one. The suite generates its own demonstration credential per run, so no literal password exists anywhere in the repository, tests included.
+
+It is finished on purpose. What a real deployment would add is written down under [Production path](#production-path), with the reason each item is deferred, so the deferral stays deliberate rather than becoming an oversight.
+
+**Contents:** [What this is](#what-this-is) · [Setup and run](#setup-and-run) · [Using the app](#using-the-app) · [Data model and API shape](#data-model-and-api-shape) · [Repository map](#repository-map) · [Architecture](#architecture) · [Design decisions](#design-decisions) · [Testing](#testing) · [Production path](#production-path) · [Security in the development lifecycle](#security-in-the-development-lifecycle) · [Roadmap](#roadmap) · [Where I drew the line on done](#where-i-drew-the-line-on-done) · [AI-assisted development](#ai-assisted-development)
 
 -------------------------------------------------------------------------------
 

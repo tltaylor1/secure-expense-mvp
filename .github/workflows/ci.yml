@@ -124,3 +124,18 @@ jobs:
           exit-code: "1"
           severity: HIGH,CRITICAL
           ignore-unfixed: true
+
+  doctrine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: tltaylor1/build-doctrine
+          ref: 110a64984ad306f4c502b571a6d359afb5cd4c81
+          path: doctrine
+          persist-credentials: false
+      - name: no retired project name in active text
+        run: python3 doctrine/scripts/check_names.py .

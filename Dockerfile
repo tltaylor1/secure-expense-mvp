@@ -21,6 +21,10 @@ WORKDIR /app
 # Dependencies first, alone, so code edits do not invalidate this layer.
 COPY requirements.txt ./
 RUN python -m pip install --no-cache-dir --require-hashes -r requirements.txt
+# The installer leaves with the build: nothing at runtime installs
+# packages, and pip carries its own vendored copies of libraries
+# (urllib3 among them) that the image scanner reads as installed.
+RUN python -m pip uninstall -y pip
 
 COPY app/ app/
 COPY frontend/ frontend/

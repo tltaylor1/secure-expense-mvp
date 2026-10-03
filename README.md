@@ -110,7 +110,7 @@ Indexes exist on the columns that are actually filtered and joined: owner and em
 | `seed.py` | Rebuilds the database with sample data; committed instead of a database file |
 | `requirements*.in` / `requirements*.txt` | Chosen packages, and the hash-pinned tree that actually installs |
 | `sbom.json` | Software bill of materials: the dependency inventory |
-| `Dockerfile` | The deployable artifact: digest-pinned base, hash-pinned installs, non-root user |
+| `Dockerfile` | The deployable artifact: digest-pinned base, hash-pinned installs, the installer removed after them, non-root user |
 | `docker-compose.yml` | PostgreSQL plus the app; the database is not host-exposed |
 | `.dockerignore` | Keeps `.env`, local state, and noise out of the build context |
 | `.pre-commit-config.yaml` | Secret scanning as a commit-blocking mechanism |

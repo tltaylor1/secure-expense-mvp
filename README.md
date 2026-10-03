@@ -8,6 +8,25 @@ The build is deliberately small and security-first: every design decision below 
 
 **Contents:** [Setup and run](#setup-and-run) · [Using the app](#using-the-app) · [Data model and API shape](#data-model-and-api-shape) · [Repository map](#repository-map) · [Architecture](#architecture) · [Design decisions](#design-decisions) · [Testing](#testing) · [Production path](#production-path) · [Security in the development lifecycle](#security-in-the-development-lifecycle) · [Roadmap](#roadmap) · [Where I drew the line on done](#where-i-drew-the-line-on-done) · [AI-assisted development](#ai-assisted-development)
 
+## Start here
+
+Read these sections in order.
+
+1. [Using the app](#using-the-app): what an employee and a manager can do.
+2. [Architecture](#architecture): the components and the trust boundary every request crosses.
+3. [Design decisions](#design-decisions): each control recorded against the threat it answers, which is where the threat model lives.
+4. [Testing](#testing): the tests named for the property each defends, and the controls proven by breaking them.
+5. [Security in the development lifecycle](#security-in-the-development-lifecycle): the gates every change passes.
+
+## How this is checked
+
+- Object-level authorization: the owner check on every owned row in [app/main.py](app/main.py), held by [tests/test_expenses.py](tests/test_expenses.py).
+- File handling: the receipt allowlist, size bound, and owner-only access in [app/main.py](app/main.py), held by [tests/test_receipts.py](tests/test_receipts.py).
+- Audit records: one entry point in [app/audit.py](app/audit.py), written in the same transaction as the change it records, with attribution held by [tests/test_expenses.py](tests/test_expenses.py).
+- Dependency integrity: every install is hash-pinned from [requirements.txt](requirements.txt) and audited in [the pipeline](.github/workflows/ci.yml).
+- Mutation testing: three controls removed on purpose, and the tests that failed each time, in [Verified by mutation, not by coverage](#verified-by-mutation-not-by-coverage).
+- Delivery gates: the tests and scanners that run on every push in [the pipeline](.github/workflows/ci.yml), and the secret scan that blocks a commit in [.pre-commit-config.yaml](.pre-commit-config.yaml).
+
 -------------------------------------------------------------------------------
 
 ## Setup and run

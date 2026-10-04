@@ -127,6 +127,7 @@ Indexes exist on the columns that are actually filtered and joined: owner and em
 | `frontend/` | The interface: one page, its stylesheet (light and dark), and its script; values rendered as text only |
 | `tests/` | The attack checklist run on every change |
 | `seed.py` | Rebuilds the database with sample data; committed instead of a database file |
+| `DEPENDENCIES.md` | Every runtime package with its canonical source, its role, and what brought it in, checked against the tree |
 | `requirements*.in` / `requirements*.txt` | Chosen packages, and the hash-pinned tree that actually installs |
 | `Dockerfile` | The deployable artifact: digest-pinned base, hash-pinned installs, the installer removed after them, non-root user |
 | `docker-compose.yml` | PostgreSQL plus the app; the database is not host-exposed |
@@ -242,15 +243,9 @@ Dependencies are treated as the part of the codebase nobody wrote here, which is
 
 - **Every package was checked against PyPI, Python's public package registry, before adoption:** the name resolves to the canonical project, not a lookalike. Runtime dependencies:
 
-  | Package | Version | Canonical source | Role |
-  |---|---|---|---|
-  | fastapi | 0.140.13 | github.com/fastapi/fastapi | web framework |
-  | uvicorn | 0.51.0 | github.com/Kludex/uvicorn | application server |
-  | SQLAlchemy | 2.0.51 | sqlalchemy.org | ORM |
-  | bcrypt | 5.0.0 | github.com/pyca/bcrypt | password hashing |
-  | PyJWT | 2.13.0 | github.com/jpadilla/pyjwt | login tokens |
+  Every package in the runtime tree, chosen directly or brought in by another, is recorded in [DEPENDENCIES.md](DEPENDENCIES.md) with its canonical source, its role, and what brought it in, and the doctrine job fails when the tree holds a package with no record (build-doctrine D-039).
 
-  Development and audit tooling (pytest 9.1.1, httpx 0.28.1, bandit 1.9.4, pip-audit 2.10.1, cyclonedx-bom 7.3.1) verified the same way and isolated in `requirements-dev.txt`.
+  Development and audit tooling is verified the same way and isolated in `requirements-dev.txt`.
 - **One package was rejected on provenance:** passlib, the common recommendation for password hashing, has had no release since 2020 and breaks against maintained bcrypt versions. Password hashing uses `bcrypt` directly, maintained by the Python Cryptographic Authority.
 - **Installs are hash-pinned.** `requirements.in` holds the chosen packages; `pip-compile --generate-hashes` resolves the full tree into `requirements.txt` with a SHA-256 hash (a cryptographic fingerprint that changes if a single byte changes) per artifact, and installs run `--require-hashes`, so a tampered or substituted package fails to install instead of running. Hashes verify *what* was fetched. The maturing standard for proving *how* an artifact was built is SLSA (Supply-chain Levels for Software Artifacts) provenance attestation, which this workflow would consume once registry tooling stabilizes.
 - **The inventory is generated, never committed.** Every pipeline run writes a software bill of materials (SBOM) in the CycloneDX format for the full dependency tree from `requirements.txt`, and publishes it as the `sbom` artifact of that run. A committed copy drifted from the tree across several updates without anything noticing; a generated one cannot disagree with what was installed.

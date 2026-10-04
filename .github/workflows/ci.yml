@@ -143,8 +143,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: tltaylor1/build-doctrine
-          ref: 3a9e72d874aae4244836e3f877458c639f4faf6e
+          ref: de8d5272f8d0529d386f45c3a10030122442acc6
           path: doctrine
           persist-credentials: false
       - name: no retired project name in active text
         run: python3 doctrine/scripts/check_names.py .
+      - name: every runtime package is recorded
+        run: python3 doctrine/scripts/check_dependency_records.py .

@@ -12,5 +12,4 @@ __pycache__/
 .git/
 .github/
 tests/
-sbom.json
 *.md

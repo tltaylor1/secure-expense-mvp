@@ -20,7 +20,7 @@
 - Never force push, rewrite history, or delete branches without asking first.
 - Before adding any package: verify on PyPI that the name resolves to the canonical project, and record it in the README supply chain table with version, source, and role.
 - Dependencies go in requirements.in (or requirements-dev.in), compiled with pip-compile --generate-hashes, installed with --require-hashes. Never pip install a package directly into the project environment.
-- After any dependency change: recompile, regenerate sbom.json (cyclonedx-py), and run pip-audit.
+- After any dependency change: recompile and run pip-audit. The pipeline generates the bill of materials on every run; it is never committed.
 
 -------------------------------------------------------------------------------
 

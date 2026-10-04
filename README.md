@@ -128,7 +128,6 @@ Indexes exist on the columns that are actually filtered and joined: owner and em
 | `tests/` | The attack checklist run on every change |
 | `seed.py` | Rebuilds the database with sample data; committed instead of a database file |
 | `requirements*.in` / `requirements*.txt` | Chosen packages, and the hash-pinned tree that actually installs |
-| `sbom.json` | Software bill of materials: the dependency inventory |
 | `Dockerfile` | The deployable artifact: digest-pinned base, hash-pinned installs, the installer removed after them, non-root user |
 | `docker-compose.yml` | PostgreSQL plus the app; the database is not host-exposed |
 | `.dockerignore` | Keeps `.env`, local state, and noise out of the build context |
@@ -254,7 +253,7 @@ Dependencies are treated as the part of the codebase nobody wrote here, which is
   Development and audit tooling (pytest 9.1.1, httpx 0.28.1, bandit 1.9.4, pip-audit 2.10.1, cyclonedx-bom 7.3.1) verified the same way and isolated in `requirements-dev.txt`.
 - **One package was rejected on provenance:** passlib, the common recommendation for password hashing, has had no release since 2020 and breaks against maintained bcrypt versions. Password hashing uses `bcrypt` directly, maintained by the Python Cryptographic Authority.
 - **Installs are hash-pinned.** `requirements.in` holds the chosen packages; `pip-compile --generate-hashes` resolves the full tree into `requirements.txt` with a SHA-256 hash (a cryptographic fingerprint that changes if a single byte changes) per artifact, and installs run `--require-hashes`, so a tampered or substituted package fails to install instead of running. Hashes verify *what* was fetched. The maturing standard for proving *how* an artifact was built is SLSA (Supply-chain Levels for Software Artifacts) provenance attestation, which this workflow would consume once registry tooling stabilizes.
-- **The inventory is a document, not a memory.** `sbom.json` is a software bill of materials (SBOM) in the CycloneDX format, covering the full dependency tree and regenerated when dependencies change.
+- **The inventory is generated, never committed.** Every pipeline run writes a software bill of materials (SBOM) in the CycloneDX format for the full dependency tree from `requirements.txt`, and publishes it as the `sbom` artifact of that run. A committed copy drifted from the tree across several updates without anything noticing; a generated one cannot disagree with what was installed.
 - **The tree is audited.** `pip-audit` runs against the pinned set (clean at time of writing). Any future finding gets triaged by whether it is actually being exploited, using the Known Exploited Vulnerabilities catalog from CISA (the US Cybersecurity and Infrastructure Security Agency) to decide urgency, rather than severity score alone. At organizational scale that triage is published as VEX (Vulnerability Exploitability eXchange) statements alongside the SBOM, the standard format for saying which findings do and do not affect a product.
 - **Licenses are read, not assumed.** The SBOM doubles as the legal inventory: the full tree is MIT, Apache, BSD, and similar permissive licenses, with one dev tool under the GNU Lesser General Public License, used unmodified.
 

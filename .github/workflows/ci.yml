@@ -43,6 +43,15 @@ jobs:
 
       - name: Dependency audit (pip-audit)
         run: pip-audit -r requirements.txt --disable-pip
+      - name: Software bill of materials, generated from the pinned tree
+        # Generated on every run and published with it, never committed: the
+        # committed copy drifted from the tree across several updates and
+        # nothing noticed. A generated one cannot disagree with what installed.
+        run: python -m cyclonedx_py requirements requirements.txt --output-reproducible --output-file "$RUNNER_TEMP/sbom.json"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: sbom
+          path: ${{ runner.temp }}/sbom.json
 
       # The binary, not the action. The action scans the event's commits:
       # its source passes --log-opts=--no-merges --first-parent

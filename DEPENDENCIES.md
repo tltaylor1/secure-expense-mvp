@@ -34,7 +34,7 @@ package the tree no longer holds (build-doctrine D-039).
 | uvicorn | github.com/Kludex/uvicorn | application server | chosen directly |
 | uvloop | github.com/MagicStack/uvloop | Fast implementation of asyncio event loop on top of libuv | uvicorn |
 | watchfiles | github.com/samuelcolvin/watchfiles | Simple, modern and high performance file watching and code reload in python | uvicorn |
-| websockets | websockets.readthedocs.io/en/stable/project/changelog.html | An implementation of the WebSocket Protocol (RFC 6455 & 7692) | uvicorn |
+| websockets | github.com/python-websockets/websockets | An implementation of the WebSocket Protocol (RFC 6455 & 7692) | uvicorn |
 
 ## Adoption records
 

@@ -3,3 +3,5 @@ kind: application
 invites_contributions: false
 exclusions:
   contributing: finished on purpose; the README says so and no contributions are invited
+name_allowlist:
+  - .vale/styles/Proselint/Cliches.yml

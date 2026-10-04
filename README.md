@@ -143,7 +143,7 @@ Indexes exist on the columns that are actually filtered and joined: owner and em
 
 Three parts, with all security enforced in the middle one:
 
-- **PostgreSQL database** under Docker Compose, reachable only on the compose network; the host exposes no database port. A SQLite fallback serves the zero-setup quick start and the test suite. Only the backend touches either.
+- **PostgreSQL database** under Docker Compose, reachable only on the compose network; the host exposes no database port, one fewer listening service to attack. A SQLite fallback serves the zero-setup quick start and the test suite. Only the backend touches either.
 - **FastAPI backend.** The trust boundary. Every request passes the same gates in order: token check (who are you), input validation through a typed Pydantic model (is this request sane), authorization (may you touch this specific record), the action itself through the ORM (object-relational mapper, the library that turns Python objects into safe, parameterized database queries), an audit log write, and a response filtered through an explicit output model.
 - **Frontend.** One HTML page with JavaScript that calls the backend's API (application programming interface: the set of requests the backend answers). It contains no security logic on purpose: a browser page is fully under the user's control, so anything enforced there is decoration. The page hides buttons a role cannot use; the server enforces the rule.
 
@@ -157,7 +157,6 @@ Each gate exists because of a specific failure: forged identity (token), hostile
 
 - **FastAPI**, because typed Pydantic validation is the framework's default path, making server-side input validation the normal case rather than an add-on.
 - **PostgreSQL through the ORM.** All access goes through the ORM, which parameterizes every query and removes SQL injection (attacker-supplied text becoming database commands) as a bug class rather than defending against it case by case. The build started on SQLite for zero setup; it moved to PostgreSQL when the app gained a container runtime, because Compose dissolved the setup cost and a production-shaped database exercises real roles and constraint enforcement. SQLite remains the quick-start and test path, through the same ORM and the same models, so the choice of engine never touches application code.
-- **The database is not host-reachable.** The compose file publishes no database port; only the app container can connect. One fewer listening service is one fewer attack surface.
 - **REST rather than GraphQL**, chosen for the authorization surface. In REST each endpoint is one operation with its own explicit ownership and role check, so the checks are countable and testable. GraphQL lets a client compose its own query graph, which moves authorization down to every field and resolver and adds query depth and complexity abuse as a denial-of-service surface. For a small build reviewed for security, the smaller and more explicit surface wins.
 - Both trade scale for correctness in a small build. That trade is deliberate; the [production path](#production-path) records what changes when it no longer holds.
 
@@ -367,8 +366,8 @@ than a gap:
 - **Public since August 2, 2026.** Platform secret scanning with push
   protection is on. CodeQL analysis and an OpenSSF Scorecard run were
   listed for that day and were not added; a finished reference keeps
-  the controls it was finished with, and the program's active
-  repositories carry both. This stays listed as not done.
+  the controls it was finished with, and manifest-identity and
+  build-doctrine carry both. This stays listed as not done.
 - **The production path items** above, only if this app ever actually
   deploys; they are recorded so the deferral stays deliberate.
 

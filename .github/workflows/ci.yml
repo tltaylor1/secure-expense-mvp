@@ -4,7 +4,7 @@
 # The trailing comment records which release each hash was resolved from.
 name: ci
 
-on: [push]
+on: [push, pull_request]
 
 # Least privilege applies to the token every job runs under. Read is all any
 # job here needs, and a job that later needs more asks for it in its own

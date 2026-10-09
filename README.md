@@ -2,6 +2,11 @@
 
 ![secure-expense-mvp: expense approvals, built security-first](images/secure-expense-mvp-banner.png)
 
+**Archived October 2026.** This application is complete and no longer
+maintained. Its code, tests, and records stay readable as a reference,
+and its dependencies are not updated, so read the versions as they
+stood on that date.
+
 A small expense submission and approval tool, built as an MVP (minimum viable product: the smallest version that works end to end). Employees submit expenses and track their status. Managers review, approve, or reject them.
 
 The build is deliberately small and security-first: every design decision below is recorded with the threat or failure it addresses, so the code and its reasoning can be reviewed together.
